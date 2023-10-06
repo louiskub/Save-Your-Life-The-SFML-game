@@ -20,7 +20,7 @@ public:
     float cooldownTime;
     void setVar(char type, float x, float y) {
         if (type == 'm') {
-            gun.shape.setPosition(x + 80, y + 150);
+            gun.shape.setPosition(x, y+40);
             gun.baseDamage = 20;
             gun.range = 1000.f;
             gun.cooldownTime = 0.125;
@@ -29,7 +29,7 @@ public:
             gun.shape.setFillColor(Color::Red);
         }
         else if (type == 's') {
-            gun.shape.setPosition(x + 70, y + 110);
+            gun.shape.setPosition(x, y);
             gun.baseDamage = 30;
             gun.range = 200.f;
             gun.cooldownTime = 0.5;
@@ -98,10 +98,10 @@ int main()
 
     // Var
     char playerDirect = 'l', enemyDirect = 'l', gunType = 'm';
-    int aniL = 0, aniR = 0, aniFly = 0, flyTime = 0, playerScore = 0, aniBomb = 0;
+    int aniL = 0, aniR = 0, aniIdle = 0, aniFly = 0, flyTime = 0, playerScore = 0, aniBomb = 0;
     int hpNow = 200, hpMax = 200;
     float playerSpeed = 5.f, enemySpeed = 1.5f;
-    bool fly = 0, land = 0;
+    bool fly = 0, land = 0, isIdle = 0;
     Clock clockP, clockJ, bulletCooldown, clockSpawnNormal, clockSpawnBoss, clockMusic, clockBombCooldown, clockBombAni;
     std::string stringUsername = "Lung Tuu", stringBombCooldown = "  ";
     std::vector<GUN> bullets;
@@ -119,14 +119,12 @@ int main()
     Texture MAIN;
     MAIN.loadFromFile("background/mainmenu.png");
 
-    Texture PLAYERLEFT;
-    PLAYERLEFT.loadFromFile("sprite/RunLeft.png");
-    Texture PLAYERRIGHT;
-    PLAYERRIGHT.loadFromFile("sprite/RunRight.png");
-    Texture JUMPLEFT;
-    JUMPLEFT.loadFromFile("sprite/JumpLeft.png");
-    Texture JUMPRIGHT;
-    JUMPRIGHT.loadFromFile("sprite/JumpRight.png");
+    Texture PLAYER;
+    PLAYER.loadFromFile("sprite/Run.png");
+    Texture JUMP;
+    JUMP.loadFromFile("sprite/Jump.png");
+    Texture IDLE;
+    IDLE.loadFromFile("sprite/Idle.png");
     Texture EXPLOSION;
     EXPLOSION.loadFromFile("sprite/explosion.png");
     Texture EXPLOSIONICON;
@@ -156,9 +154,10 @@ int main()
     Background.setTexture(&MAP);
 
     RectangleShape player(Vector2f(200, 200));
-    player.setTexture(&PLAYERLEFT);
+    player.setTexture(&PLAYER);
     player.setTextureRect(IntRect(0, 0, 128, 128));
-    player.setPosition(200.f, 415.f);
+    player.setPosition(200.f, 515.f);
+    player.setOrigin(Vector2f(player.getGlobalBounds().width / 2, player.getGlobalBounds().height / 2));
 
     RectangleShape explosion(Vector2f(250, 250));
     explosion.setTexture(&EXPLOSION);
@@ -247,7 +246,8 @@ int main()
 
         //PlayerMovement
         if (Keyboard::isKeyPressed(Keyboard::A)) {
-            playerDirect = 'l';
+            player.setScale(-1, 1);
+            playerDirect = 'l', isIdle = false;
             if (clockP.getElapsedTime().asSeconds() >= 0.0625) {
                 player.setTextureRect(IntRect(0 + 128 * aniL, 0, 128, 128));
                 aniL++;
@@ -255,11 +255,11 @@ int main()
                     aniL = 0;
                 clockP.restart();
             }
-            aniR = 0;
+            aniR = 0, aniIdle = 0;
             player.move(-playerSpeed, 0);
-        }
-        if (Keyboard::isKeyPressed(Keyboard::D)) {
-            playerDirect = 'r';
+        }else if (Keyboard::isKeyPressed(Keyboard::D)) {
+            player.setScale(1, 1);
+            playerDirect = 'r', isIdle = false;
             if (clockP.getElapsedTime().asSeconds() >= 0.0625) {
                 player.setTextureRect(IntRect(0 + 128 * aniR, 0, 128, 128));
                 aniR++;
@@ -267,28 +267,37 @@ int main()
                     aniR = 0;
                 clockP.restart();
             }
-            aniL = 0;
+            aniL = 0, aniIdle = 0;
             player.move(playerSpeed, 0);
+        } 
+        else {
+            isIdle = 1;
+            if (clockP.getElapsedTime().asSeconds() >= 0.125) {
+                player.setTextureRect(IntRect(0 + 128 * aniIdle, 0, 128, 128));
+                aniIdle++;
+                if (aniIdle > 5)
+                    aniIdle = 0;
+                clockP.restart();
+            }
+            aniL = 0, aniR = 0;
         }
+
+        if (!isIdle) player.setTexture(&PLAYER);
+        else player.setTexture(&IDLE);
+
         if (Keyboard::isKeyPressed(Keyboard::Y)) {
             hpNow -= 5;
             hpRed.setSize(Vector2f(hpNow, 20));
         }
         if (Keyboard::isKeyPressed(Keyboard::U)) if (gunType == 's')gunType = 'm'; else gunType = 's';
         if (Keyboard::isKeyPressed(Keyboard::I)) playerScore++;
-
-        if (playerDirect == 'l') player.setTexture(&PLAYERLEFT);
-        else player.setTexture(&PLAYERRIGHT);
+        
 
         if (Keyboard::isKeyPressed(Keyboard::W) && !fly && !land)
             fly = 1, land = 0;
 
         if (fly) {
-            if (playerDirect == 'l')
-                player.setTexture(&JUMPLEFT);
-            else
-                player.setTexture(&JUMPRIGHT);
-
+            player.setTexture(&JUMP);
             player.move(0.f, -10.f);
             player.setTextureRect(IntRect(0 + 128 * aniFly, 0, 128, 128));
             if (flyTime == 3)
@@ -298,10 +307,7 @@ int main()
                 fly = 0, land = 1;
         }
         else if (land) {
-            if (playerDirect == 'l')
-                player.setTexture(&JUMPLEFT);
-            else
-                player.setTexture(&JUMPRIGHT);
+            player.setTexture(&JUMP);
 
             player.move(0.f, 10.f);
             player.setTextureRect(IntRect(0 + 128 * aniFly, 0, 128, 128));
@@ -310,7 +316,7 @@ int main()
             else flyTime++;
             if (player.getPosition().y == 415.f) {
                 fly = 0, land = 0, aniFly = 0;
-                player.setTexture(&PLAYERLEFT);
+                player.setTexture(&PLAYER);
                 player.setTextureRect(IntRect(0, 0, 128, 128));
             }
         }
