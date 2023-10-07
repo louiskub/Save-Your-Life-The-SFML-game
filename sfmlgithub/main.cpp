@@ -8,8 +8,9 @@ using namespace sf;
 
 #define maxEnemy 10
 #define normalSpawnTime 3.f
-#define flySpawnTime 15.f
-#define bossSpawnTime 30.f
+#define flySpawnTime 25.f
+#define bossSpawnTime 15.f
+int playerScore = 0;
 
 class GUN {
 public:
@@ -20,8 +21,8 @@ public:
     float cooldownTime;
     void setVar(char type, float x, float y) {
         if (type == 'm') {
-            gun.shape.setPosition(x, y+40);
-            gun.baseDamage = 20;
+            gun.shape.setPosition(x + 80*direction, y+47);
+            gun.baseDamage = 25;
             gun.range = 1000.f;
             gun.cooldownTime = 0.125;
             gun.bulletSpeed = 10.f;
@@ -30,7 +31,7 @@ public:
         }
         else if (type == 's') {
             gun.shape.setPosition(x, y);
-            gun.baseDamage = 30;
+            gun.baseDamage = 20;
             gun.range = 200.f;
             gun.cooldownTime = 0.5;
             gun.bulletSpeed = 20.f;
@@ -53,34 +54,50 @@ public:
     Clock clockAniEne, clockAttack;
     void setVar(Texture* texture, bool random) {
         if (enemyType == 'n') {
-            enemy.hpMax = enemy.hpNow = 30;
-            enemy.baseDamage = 20, enemy.enemySpeed = 1.5f;
+            enemy.hpMax = enemy.hpNow = 30 + int(playerScore/10);
+            enemy.baseDamage = 20 + int(playerScore / 20) , enemy.enemySpeed = 1.5f;
             enemy.direction = 'l';
             enemy.sizeX = 24, enemy.sizeY = 24, enemy.maxAni = 24;
             enemy.shape.setSize(Vector2f(96, 96));
             enemy.shape.setTextureRect(IntRect(0, 0, 24, 24));
-            enemy.shape.setPosition(-100.f + random * 1100, 530.f);;
+            enemy.shape.setPosition(-100.f + random * 1150, 580.f);
 
-            enemy.hpRed.setPosition(-100.f + random * 1100, 510.f);
+            enemy.hpRed.setPosition(-148.f + random * 1150, 530.f);
             enemy.hpRed.setSize(Vector2f(96, 5));
-            enemy.hpBlack.setPosition(-100.f + random * 1100, 510.f);
+            enemy.hpBlack.setPosition(-148.f + random * 1150, 530.f);
             enemy.hpBlack.setSize(Vector2f(96, 5));
         }
         else if (enemyType == 'b') {
-            enemy.hpMax = enemy.hpNow = 100;
-            enemy.baseDamage = 50, enemy.enemySpeed = 1.5f;
+            enemy.hpMax = enemy.hpNow = 100 + int(playerScore / 8);
+            enemy.baseDamage = 40 + int(playerScore / 15), enemy.enemySpeed = 1.f;
             enemy.direction = 'l';
             enemy.sizeX = 24, enemy.sizeY = 24, enemy.maxAni = 24;
-            enemy.shape.setSize(Vector2f(192, 192));
+            enemy.shape.setSize(Vector2f(144, 144));
             enemy.shape.setTextureRect(IntRect(0, 0, 24, 24));
-            enemy.shape.setPosition(-200.f + random * 1200, 442.f);
+            enemy.shape.setPosition(-200.f + random * 1200, 560.f);
 
-            enemy.hpRed.setPosition(-200.f + random * 1200, 417.f);
-            enemy.hpRed.setSize(Vector2f(192, 15));
-            enemy.hpBlack.setPosition(-200.f + random * 1200, 417.f);
-            enemy.hpBlack.setSize(Vector2f(192, 15));
+            enemy.hpRed.setPosition(-290.f + random * 1200, 470.f);
+            enemy.hpRed.setSize(Vector2f(180, 15));
+            enemy.hpBlack.setPosition(-290.f + random * 1200, 470.f);
+            enemy.hpBlack.setSize(Vector2f(180, 15));
+        }
+        else if (enemyType == 'f') {
+            enemy.hpMax = enemy.hpNow = 20;
+            enemy.baseDamage = 0, enemy.enemySpeed = 7.f;
+            enemy.direction = 'l';
+            enemy.sizeX = 1125, enemy.sizeY = 874, enemy.maxAni = 4;
+            enemy.shape.setSize(Vector2f(96, 96));
+            enemy.shape.setTextureRect(IntRect(0, 0, 1125, 874));
+            enemy.shape.setPosition(-100.f + random * 1000, 440.f);
+            enemy.shape.setScale(1 - 2 * random, 1);
+
+            enemy.hpRed.setPosition(-148.f + random * 1150, 350.f);
+            enemy.hpRed.setSize(Vector2f(96, 5));
+            enemy.hpBlack.setPosition(-148.f + random * 1150, 350.f);
+            enemy.hpBlack.setSize(Vector2f(96, 5));
         }
         enemy.shape.setTexture(texture);
+        enemy.shape.setOrigin(enemy.shape.getGlobalBounds().width / 2, enemy.shape.getGlobalBounds().height / 2);
         enemy.hpRed.setFillColor(Color::Red);
         enemy.hpRed.setOutlineColor(Color::Black);
         enemy.hpRed.setOutlineThickness(1);
@@ -97,8 +114,8 @@ int main()
     window.setFramerateLimit(60);
 
     // Var
-    char playerDirect = 'l', enemyDirect = 'l', gunType = 'm';
-    int aniL = 0, aniR = 0, aniIdle = 0, aniFly = 0, flyTime = 0, playerScore = 0, aniBomb = 0;
+    char playerDirect = 'r', enemyDirect = 'l', gunType = 'm';
+    int aniL = 0, aniR = 0, aniIdle = 0, aniFly = 0, flyTime = 0, aniBomb = 0 ,bonus = 0;
     int hpNow = 200, hpMax = 200;
     float playerSpeed = 5.f, enemySpeed = 1.5f;
     bool fly = 0, land = 0, isIdle = 0;
@@ -107,8 +124,6 @@ int main()
     std::vector<GUN> bullets;
     std::vector<ENEMY> enemies;
     std::vector<RectangleShape> items;
-
-    // Load
 
     Font FONT;
     FONT.loadFromFile("Texture/BadComic-Regular.ttf");
@@ -125,6 +140,9 @@ int main()
     JUMP.loadFromFile("sprite/Jump.png");
     Texture IDLE;
     IDLE.loadFromFile("sprite/Idle.png");
+    Texture PLAYERGUN;
+    PLAYERGUN.loadFromFile("Texture/gun-transformed.png");
+
     Texture EXPLOSION;
     EXPLOSION.loadFromFile("sprite/explosion.png");
     Texture EXPLOSIONICON;
@@ -134,6 +152,8 @@ int main()
     NORMALENEMY.loadFromFile("sprite/normalEnemy.png");
     Texture BOSSENEMY;
     BOSSENEMY.loadFromFile("sprite/bossEnemy.png");
+    Texture FLYENEMY;
+    FLYENEMY.loadFromFile("sprite/flyEnemy.png");
 
     SoundBuffer BACKGROUNDSOUND;
     BACKGROUNDSOUND.loadFromFile("audio/startmenu.mp3");
@@ -143,6 +163,8 @@ int main()
     MACHINEGUNSOUND.loadFromFile("audio/machinegun.mp3");
     SoundBuffer DINOBITE;
     DINOBITE.loadFromFile("audio/dinoBite.mp3");
+    SoundBuffer EXPLOSIONSOUND;
+    EXPLOSIONSOUND.loadFromFile("audio/explosionSound.mp3");
 
     // Define Object
 
@@ -158,6 +180,11 @@ int main()
     player.setTextureRect(IntRect(0, 0, 128, 128));
     player.setPosition(200.f, 515.f);
     player.setOrigin(Vector2f(player.getGlobalBounds().width / 2, player.getGlobalBounds().height / 2));
+
+    RectangleShape playerGun(Vector2f(80, 50));
+    playerGun.setTexture(&PLAYERGUN);
+    playerGun.setTextureRect(IntRect(0, 0, 512, 320));
+    playerGun.setPosition(205.f, 545.f);
 
     RectangleShape explosion(Vector2f(250, 250));
     explosion.setTexture(&EXPLOSION);
@@ -225,6 +252,9 @@ int main()
     dinoBiteSound.setBuffer(DINOBITE);
     dinoBiteSound.setVolume(80);
     backgroundSound.play();
+    Sound explosionSound;
+    explosionSound.setBuffer(EXPLOSIONSOUND);
+    explosionSound.setVolume(60);
 
     while (window.isOpen())
     {
@@ -245,8 +275,11 @@ int main()
         textScore.setString("Score : " + std::to_string(playerScore));
 
         //PlayerMovement
+        isIdle = true;
         if (Keyboard::isKeyPressed(Keyboard::A)) {
+            player.setTexture(&PLAYER);
             player.setScale(-1, 1);
+            playerGun.setScale(-1, 1);
             playerDirect = 'l', isIdle = false;
             if (clockP.getElapsedTime().asSeconds() >= 0.0625) {
                 player.setTextureRect(IntRect(0 + 128 * aniL, 0, 128, 128));
@@ -257,8 +290,12 @@ int main()
             }
             aniR = 0, aniIdle = 0;
             player.move(-playerSpeed, 0);
-        }else if (Keyboard::isKeyPressed(Keyboard::D)) {
+            playerGun.move(-playerSpeed, 0);
+        }
+        if (Keyboard::isKeyPressed(Keyboard::D)) {
+            player.setTexture(&PLAYER);
             player.setScale(1, 1);
+            playerGun.setScale(1, 1);
             playerDirect = 'r', isIdle = false;
             if (clockP.getElapsedTime().asSeconds() >= 0.0625) {
                 player.setTextureRect(IntRect(0 + 128 * aniR, 0, 128, 128));
@@ -269,10 +306,11 @@ int main()
             }
             aniL = 0, aniIdle = 0;
             player.move(playerSpeed, 0);
+            playerGun.move(playerSpeed, 0);
         } 
-        else {
-            isIdle = 1;
-            if (clockP.getElapsedTime().asSeconds() >= 0.125) {
+        if (isIdle) {
+            player.setTexture(&IDLE);
+            if (clockP.getElapsedTime().asSeconds() >= 0.0625) {
                 player.setTextureRect(IntRect(0 + 128 * aniIdle, 0, 128, 128));
                 aniIdle++;
                 if (aniIdle > 5)
@@ -282,41 +320,45 @@ int main()
             aniL = 0, aniR = 0;
         }
 
-        if (!isIdle) player.setTexture(&PLAYER);
-        else player.setTexture(&IDLE);
-
         if (Keyboard::isKeyPressed(Keyboard::Y)) {
             hpNow -= 5;
             hpRed.setSize(Vector2f(hpNow, 20));
         }
-        if (Keyboard::isKeyPressed(Keyboard::U)) if (gunType == 's')gunType = 'm'; else gunType = 's';
+        if (Keyboard::isKeyPressed(Keyboard::U)) {
+            if (gunType == 's') {
+                playerGun.setTextureRect(IntRect(0, 0, 512, 320));
+                gunType = 'm';
+            }
+            else {
+                playerGun.setTextureRect(IntRect(512, 0, 512, 320));
+                gunType = 's';
+            }               
+        }
         if (Keyboard::isKeyPressed(Keyboard::I)) playerScore++;
-        
-
         if (Keyboard::isKeyPressed(Keyboard::W) && !fly && !land)
             fly = 1, land = 0;
-
         if (fly) {
             player.setTexture(&JUMP);
             player.move(0.f, -10.f);
+            playerGun.move(0.f, -10.f);
             player.setTextureRect(IntRect(0 + 128 * aniFly, 0, 128, 128));
             if (flyTime == 3)
                 aniFly++, flyTime = 0;
             else flyTime++;
-            if (player.getPosition().y == 415.f - 160)
+            if (player.getPosition().y == 515.f - 160)
                 fly = 0, land = 1;
         }
         else if (land) {
             player.setTexture(&JUMP);
-
+            playerGun.move(0.f, 10.f);
             player.move(0.f, 10.f);
             player.setTextureRect(IntRect(0 + 128 * aniFly, 0, 128, 128));
             if (flyTime == 3)
                 aniFly++, flyTime = 0;
             else flyTime++;
-            if (player.getPosition().y == 415.f) {
+            if (player.getPosition().y == 515.f) {
                 fly = 0, land = 0, aniFly = 0;
-                player.setTexture(&PLAYER);
+                player.setTexture(&IDLE);
                 player.setTextureRect(IntRect(0, 0, 128, 128));
             }
         }
@@ -338,19 +380,32 @@ int main()
             enemies.push_back(enemy);
             clockSpawnNormal.restart();
         }
+        if(Keyboard::isKeyPressed(Keyboard::LBracket) || (clockSpawnNormal.getElapsedTime().asSeconds() >= flySpawnTime && enemies.size() <= maxEnemy)) {
+            enemy.enemyType = 'f';
+            enemy.setVar(&FLYENEMY, rand() % 2);
+            enemies.push_back(enemy);
+            clockSpawnNormal.restart();
+        }
+        
 
         //Enemies Movement Attack Player-Deaath Animation
         for (int i = 0; i < enemies.size(); i++) {
             // Movement
-            if (enemies[i].shape.getPosition().x + enemies[i].shape.getSize().x - 90 < playerNowX) {
+            if (enemies[i].enemyType == 'f') {
+                enemies[i].shape.move(enemies[i].enemySpeed * enemies[i].shape.getScale().x, 0);
+                if (enemies[i].shape.getPosition().x < -200 || enemies[i].shape.getPosition().x >1200)
+                    enemies.erase(enemies.begin() + i);
+                continue;
+            }else if (enemies[i].shape.getPosition().x + enemies[i].shape.getSize().x - 50 < playerNowX) {
                 enemies[i].direction = 'r';
+                enemies[i].shape.setScale(1, 1);
                 enemies[i].shape.move(enemies[i].enemySpeed, 0);
                 enemies[i].hpRed.move(enemies[i].enemySpeed, 0);
                 enemies[i].hpBlack.move(enemies[i].enemySpeed, 0);
-            }
-            else if (enemies[i].shape.getPosition().x + 90 > playerNowX + player.getSize().x)
+            }else if (enemies[i].shape.getPosition().x + 50 > playerNowX + player.getSize().x/2)
             {
                 enemies[i].direction = 'l';
+                enemies[i].shape.setScale(-1, 1);
                 enemies[i].shape.move(-enemies[i].enemySpeed, 0);
                 enemies[i].hpRed.move(-enemies[i].enemySpeed, 0);
                 enemies[i].hpBlack.move(-enemies[i].enemySpeed, 0);
@@ -360,10 +415,7 @@ int main()
             if (enemies[i].clockAniEne.getElapsedTime().asSeconds() >= 0.125) {
                 int sizeX = enemies[i].sizeX;
                 int sizeY = enemies[i].sizeY;
-                if (enemies[i].direction == 'r')
-                    enemies[i].shape.setTextureRect(IntRect(sizeX * enemies[i].aniEnemy, 0, sizeX, sizeY));
-                else if (enemies[i].direction == 'l')
-                    enemies[i].shape.setTextureRect(IntRect(sizeX * (sizeX - 1 - enemies[i].aniEnemy), sizeY, sizeX, sizeY));
+                enemies[i].shape.setTextureRect(IntRect(sizeX * enemies[i].aniEnemy, 0, sizeX, sizeY));
                 if (enemies[i].shape.getGlobalBounds().intersects(player.getGlobalBounds()) &&
                     enemies[i].aniEnemy >= 17 && enemies[i].aniEnemy <= 20 &&
                     enemies[i].clockAttack.getElapsedTime().asSeconds() >= 2)
@@ -382,7 +434,6 @@ int main()
                     }
                     hpRed.setSize(Vector2f(hpNow, 20));
                 }
-
                 enemies[i].aniEnemy++;
                 if (enemies[i].aniEnemy >= enemies[i].maxAni)
                     enemies[i].aniEnemy = 0;
@@ -417,11 +468,17 @@ int main()
                 for (int j = 0; j < enemies.size(); j++) {
                     if (!bullets[i].shape.getGlobalBounds().intersects(enemies[j].shape.getGlobalBounds()))
                         continue;
-                    enemies[j].hpNow -= bullets[i].baseDamage;
+                    enemies[j].hpNow -= bullets[i].baseDamage - int(playerScore/50);
                     enemies[j].hpRed.setSize(Vector2f(enemies[j].shape.getSize().x * enemies[j].hpNow / enemies[j].hpMax, enemies[j].hpBlack.getSize().y));
                     if (enemies[j].hpNow <= 0) {
                         if (enemies[j].enemyType == 'n')
                             playerScore += 10;
+                        else if (enemies[j].enemyType == 'b')
+                            playerScore += 30;
+                        else if (enemies[j].enemyType == 'f') {
+                            playerScore += 80;
+
+                        }
                         enemies.erase(enemies.begin() + j);
                     }
                     if (gunType == 'm') {
@@ -436,9 +493,11 @@ int main()
         if (Keyboard::isKeyPressed(Keyboard::K) && aniBomb == 0 && clockBombCooldown.getElapsedTime().asSeconds() >= 15) {
             std::cout << "Press K\n";
             aniBomb = 1;
-            if (playerDirect == 'l') explosion.setPosition(Vector2f(playerNowX - 300, playerNowY));
-            else explosion.setPosition(Vector2f(playerNowX + 200 + 300, playerNowY));
+            explosionSound.play();
+            if (playerDirect == 'l') explosion.setPosition(Vector2f(playerNowX - 500, playerNowY-125));
+            else explosion.setPosition(Vector2f(playerNowX + 300, playerNowY-125));
             clockBombCooldown.restart();
+            
         }
         if (aniBomb != 0 && clockBombAni.getElapsedTime().asSeconds() >= 0.125) {
             explosion.setTextureRect(IntRect(32 * (aniBomb - 1), 0, 32, 32));
@@ -475,6 +534,7 @@ int main()
         window.draw(textScore);
         window.draw(textExpCD);
         window.draw(player);
+        window.draw(playerGun);
         for (int i = 0; i < enemies.size(); i++)
         {
             window.draw(enemies[i].hpBlack);
