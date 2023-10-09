@@ -6,9 +6,9 @@
 #include <vector>
 using namespace sf;
 
-#define maxEnemy 20
-#define normalSpawnTime 1.f
-#define flySpawnTime 30.f
+#define maxEnemy 10
+#define normalSpawnTime 3.f
+#define flySpawnTime 25.f
 #define bossSpawnTime 15.f
 int playerScore = 0, bonusHp = 0;
 
@@ -21,7 +21,7 @@ public:
     float cooldownTime;
     void setVar(char type, float x, float y) {
         if (type == 'm') {
-            gun.shape.setPosition(x + 80*direction, y+47);
+            gun.shape.setPosition(x + 80 * direction, y + 47);
             gun.startX = x + 80 * direction;
             gun.baseDamage = 25;
             gun.range = 1000.f;
@@ -31,7 +31,7 @@ public:
             gun.shape.setFillColor(Color::Red);
         }
         else if (type == 's') {
-            if(direction==-1) gun.shape.setPosition(x -100, y);
+            if (direction == -1) gun.shape.setPosition(x - 100, y);
             else gun.shape.setPosition(x, y);
             gun.startX = gun.shape.getPosition().x;
             gun.baseDamage = 20;
@@ -60,8 +60,8 @@ public:
         if (bonus > 100)
             bonus = 100;
         if (enemyType == 'n') {
-            enemy.hpMax = enemy.hpNow = 80 + bonus*3;
-            enemy.baseDamage = 20 + int(bonus / 2) , enemy.enemySpeed = 1.5f;
+            enemy.hpMax = enemy.hpNow = 80 + bonus * 3;
+            enemy.baseDamage = 20 + int(bonus / 2), enemy.enemySpeed = 1.5f;
             enemy.direction = 'l';
             enemy.sizeX = 24, enemy.sizeY = 24, enemy.maxAni = 24;
             enemy.shape.setSize(Vector2f(96, 96));
@@ -74,8 +74,8 @@ public:
             enemy.hpBlack.setSize(Vector2f(96, 5));
         }
         else if (enemyType == 'b') {
-            enemy.hpMax = enemy.hpNow = 200 + int(bonus*3);
-            enemy.baseDamage = 40 + int(bonus/1.5), enemy.enemySpeed = 1.f;
+            enemy.hpMax = enemy.hpNow = 200 + int(bonus * 3);
+            enemy.baseDamage = 40 + int(bonus / 1.5), enemy.enemySpeed = 1.f;
             enemy.direction = 'l';
             enemy.sizeX = 24, enemy.sizeY = 24, enemy.maxAni = 24;
             enemy.shape.setSize(Vector2f(144, 144));
@@ -118,16 +118,10 @@ public:
     RectangleShape shape;
     Clock remainTime;
     int type;
-    void setVar(Texture *text){
+    void setVar(Texture* text) {
+        item.shape.setSize(Vector2f(80, 80));
         item.shape.setTexture(text);
-        if (item.type < 100) {
-            item.shape.setSize(Vector2f(70, 70));
-            item.shape.setTextureRect(IntRect(type*32, 0, 32, 32));
-        }
-        else {
-            item.shape.setSize(Vector2f(112, 70));
-            item.shape.setTextureRect(IntRect((type-100)*512, 0, 512, 320));
-        }
+        item.shape.setTextureRect(IntRect(type * 32, 0, 32, 32));
         item.remainTime.restart();
     }
 }item;
@@ -140,12 +134,12 @@ int main()
 
     // Var
     char playerDirect = 'r', enemyDirect = 'l', gunType = 'm';
-    int aniL = 0, aniR = 0, aniIdle = 0, aniFly = 0, flyTime = 0, aniBomb = 0 ,bonus = 0;
+    int aniL = 0, aniR = 0, aniIdle = 0, aniFly = 0, flyTime = 0, aniBomb = 0, bonus = 0;
     int reduceExpCD = 0;
     int hpNow = 200, hpMax = 200;
     float playerSpeed = 5.f, enemySpeed = 1.5f;
     bool fly = 0, land = 0, isIdle = 0;
-    Clock clockP, clockJ, bulletCooldown, clockSpawnFly, clockSpawnNormal, clockSpawnBoss, clockMusic, clockBombCooldown, clockBombAni;
+    Clock clockP, clockJ, bulletCooldown, clockSpawnNormal, clockSpawnBoss, clockMusic, clockBombCooldown, clockBombAni;
     std::string stringUsername = "Lung Tuu", stringBombCooldown = "  ";
     std::vector<GUN> bullets;
     std::vector<ENEMY> enemies;
@@ -285,7 +279,7 @@ int main()
     explosionSound.setBuffer(EXPLOSIONSOUND);
     explosionSound.setVolume(60);
 
-    IntRect hey(100,200,300,400);
+    IntRect hey(100, 200, 300, 400);
     std::cout << hey.left << " " << hey.top << " " << hey.width << " " << hey.height << "\n";
     while (window.isOpen())
     {
@@ -298,6 +292,12 @@ int main()
             backgroundSound.play();
             clockMusic.restart();
         }
+        //Text
+        if (gunType == 's')
+            textUsername.setString("Username : " + stringUsername + "\n\n\nGuntype : Shotgun");
+        else if (gunType == 'm')
+            textUsername.setString("Username : " + stringUsername + "\n\n\nGuntype : Machine Gun");
+        textScore.setString("Score : " + std::to_string(playerScore));
 
         //PlayerMovement
         isIdle = true;
@@ -332,7 +332,7 @@ int main()
             aniL = 0, aniIdle = 0;
             player.move(playerSpeed, 0);
             playerGun.move(playerSpeed, 0);
-        } 
+        }
         if (isIdle) {
             player.setTexture(&IDLE);
             if (clockP.getElapsedTime().asSeconds() >= 0.0625) {
@@ -345,6 +345,21 @@ int main()
             aniL = 0, aniR = 0;
         }
 
+        if (Keyboard::isKeyPressed(Keyboard::Y)) {
+            hpNow -= 5;
+            hpRed.setSize(Vector2f(hpNow, 20));
+        }
+        if (Keyboard::isKeyPressed(Keyboard::U)) {
+            if (gunType == 's') {
+                playerGun.setTextureRect(IntRect(0, 0, 512, 320));
+                gunType = 'm';
+            }
+            else {
+                playerGun.setTextureRect(IntRect(512, 0, 512, 320));
+                gunType = 's';
+            }
+        }
+        if (Keyboard::isKeyPressed(Keyboard::I)) playerScore++;
         if (Keyboard::isKeyPressed(Keyboard::W) && !fly && !land)
             fly = 1, land = 0;
         if (fly) {
@@ -378,26 +393,25 @@ int main()
 
         // Enemy
         //SpawnEnimies
-        if ((clockSpawnBoss.getElapsedTime().asSeconds() >= bossSpawnTime && enemies.size() <= maxEnemy)) {
+        if (Keyboard::isKeyPressed(Keyboard::O) || (clockSpawnBoss.getElapsedTime().asSeconds() >= bossSpawnTime && enemies.size() <= maxEnemy)) {
             enemy.enemyType = 'b';
             enemy.setVar(&BOSSENEMY, rand() % 2);
             enemies.push_back(enemy);
             clockSpawnBoss.restart();
         }
-        if ((clockSpawnNormal.getElapsedTime().asSeconds() >= normalSpawnTime && enemies.size() <= maxEnemy)) {
+        if (Keyboard::isKeyPressed(Keyboard::P) || (clockSpawnNormal.getElapsedTime().asSeconds() >= normalSpawnTime && enemies.size() <= maxEnemy)) {
             enemy.enemyType = 'n';
             enemy.setVar(&NORMALENEMY, rand() % 2);
             enemies.push_back(enemy);
             clockSpawnNormal.restart();
         }
-        if ((clockSpawnFly.getElapsedTime().asSeconds() >= flySpawnTime && enemies.size() <= maxEnemy)) {
+        if (Keyboard::isKeyPressed(Keyboard::LBracket) || (clockSpawnNormal.getElapsedTime().asSeconds() >= flySpawnTime && enemies.size() <= maxEnemy)) {
             enemy.enemyType = 'f';
             enemy.setVar(&FLYENEMY, rand() % 2);
             enemies.push_back(enemy);
-            std::cout << clockSpawnFly.getElapsedTime().asSeconds() << std::endl;
-            clockSpawnFly.restart();
+            clockSpawnNormal.restart();
         }
-        
+
 
         //Enemies Movement Attack Player-Death Animation
         for (int i = 0; i < enemies.size(); i++) {
@@ -407,14 +421,16 @@ int main()
                 if (enemies[i].shape.getPosition().x < -200 || enemies[i].shape.getPosition().x >1200) {
                     enemies.erase(enemies.begin() + i);
                     continue;
-                }                   
-            }else if (enemies[i].shape.getPosition().x + enemies[i].shape.getSize().x - 50 < playerNowX) {
+                }
+            }
+            else if (enemies[i].shape.getPosition().x + enemies[i].shape.getSize().x - 50 < playerNowX) {
                 enemies[i].direction = 'r';
                 enemies[i].shape.setScale(1, 1);
                 enemies[i].shape.move(enemies[i].enemySpeed, 0);
                 enemies[i].hpRed.move(enemies[i].enemySpeed, 0);
                 enemies[i].hpBlack.move(enemies[i].enemySpeed, 0);
-            }else if (enemies[i].shape.getPosition().x + 50 > playerNowX + player.getSize().x/2)
+            }
+            else if (enemies[i].shape.getPosition().x + 50 > playerNowX + player.getSize().x / 2)
             {
                 enemies[i].direction = 'l';
                 enemies[i].shape.setScale(-1, 1);
@@ -479,37 +495,19 @@ int main()
                     if (!bullets[i].shape.getGlobalBounds().intersects(enemies[j].shape.getGlobalBounds()))
                         continue;
                     bonus = int(playerScore / 100);
-                    if(bonus > 16 )
+                    if (bonus > 16)
                         bonus = 16;
                     if (gunType == 's')
                         bonus /= 2;
-                    enemies[j].hpNow -= (bullets[i].baseDamage+bonus);
+                    enemies[j].hpNow -= (bullets[i].baseDamage + bonus);
                     enemies[j].hpRed.setSize(Vector2f(enemies[j].shape.getSize().x * enemies[j].hpNow / enemies[j].hpMax, enemies[j].hpBlack.getSize().y));
                     if (enemies[j].hpNow <= 0) {
                         if (enemies[j].enemyType == 'n') {
                             playerScore += 10, bonusHp += 10;
-                            if (rand() % 20 == 0) {
-                                if (gunType == 'm') // Change to Shotgun
-                                    item.type = 101;
-                                else if (gunType == 's') // Change to Machine gun
-                                    item.type = 100;
-                                item.shape.setPosition(Vector2f(enemies[j].shape.getPosition().x, 550));
-                                item.setVar(&PLAYERGUN);
-                                items.push_back(item);
-                            }
                         }
                         else if (enemies[j].enemyType == 'b') {
                             playerScore += 30, bonusHp += 30;
-                            if (rand() % 10 == 0) {
-                                if (gunType == 'm')
-                                    item.type = 101;
-                                else if (gunType == 's')
-                                    item.type = 100;
-                                item.shape.setPosition(Vector2f(enemies[j].shape.getPosition().x, 550));
-                                item.setVar(&PLAYERGUN);
-                                items.push_back(item);
-                            }
-                        }     
+                        }
                         else if (enemies[j].enemyType == 'f') {
                             playerScore += 80, bonusHp += 80;
                             item.type = rand() % 3;
@@ -527,9 +525,10 @@ int main()
             }
         }
 
-        //Update && Collect Items
-        for (int i = 0; i < items.size(); i++){
-            if (player.getGlobalBounds().intersects(items[i].shape.getGlobalBounds()) && Keyboard::isKeyPressed(Keyboard::U)) {
+        //Update Items
+        for (int i = 0; i < items.size(); i++)
+        {
+            if (player.getGlobalBounds().intersects(items[i].shape.getGlobalBounds())) {
                 if (items[i].type == 0) {
                     if (hpNow + 40 <= hpMax)
                         hpNow += 40;
@@ -549,12 +548,6 @@ int main()
                 else if (items[i].type == 2) {
                     reduceExpCD = 5;
                 }
-                else if (items[i].type == 101) {
-                    gunType = 's';
-                }
-                else if (items[i].type == 100) {
-                    gunType = 'm';
-                }
                 items.erase(items.begin() + i);
                 continue;
             }
@@ -565,14 +558,14 @@ int main()
         }
 
         //Explosion
-        if (Keyboard::isKeyPressed(Keyboard::K) && aniBomb == 0 && clockBombCooldown.getElapsedTime().asSeconds()+reduceExpCD >= 15) {
+        if (Keyboard::isKeyPressed(Keyboard::K) && aniBomb == 0 && clockBombCooldown.getElapsedTime().asSeconds() - reduceExpCD >= 15) {
             std::cout << "Press K\n";
             aniBomb = 1, reduceExpCD = 0;
             explosionSound.play();
-            if (playerDirect == 'l') explosion.setPosition(Vector2f(playerNowX - 500, playerNowY-125));
-            else explosion.setPosition(Vector2f(playerNowX + 300, playerNowY-125));
+            if (playerDirect == 'l') explosion.setPosition(Vector2f(playerNowX - 500, playerNowY - 125));
+            else explosion.setPosition(Vector2f(playerNowX + 300, playerNowY - 125));
             clockBombCooldown.restart();
-            
+
         }
         if (aniBomb != 0 && clockBombAni.getElapsedTime().asSeconds() >= 0.125) {
             explosion.setTextureRect(IntRect(32 * (aniBomb - 1), 0, 32, 32));
@@ -591,7 +584,7 @@ int main()
             if (aniBomb == 9)
                 aniBomb = 0;
         }
-        
+
         //Cooldown time Explosion
         int timeBombCooldown = 15 - clockBombCooldown.getElapsedTime().asSeconds() - reduceExpCD;
         if (timeBombCooldown >= 10)     stringBombCooldown = std::to_string(timeBombCooldown);
@@ -615,17 +608,6 @@ int main()
         }
         hpRed.setSize(Vector2f(hpNow, 20));
         hpBlack.setSize(Vector2f(hpMax, 20));
-
-        //Text
-        if (gunType == 's') {
-            textUsername.setString("Username : " + stringUsername + "\n\n\nGuntype : Shotgun");
-            playerGun.setTextureRect(IntRect(512, 0, 512, 320));
-        }
-        else if (gunType == 'm') {
-            textUsername.setString("Username : " + stringUsername + "\n\n\nGuntype : Machine Gun");
-            playerGun.setTextureRect(IntRect(0, 0, 512, 320));
-        }
-        textScore.setString("Score : " + std::to_string(playerScore));
 
         //Draw
         window.clear();
