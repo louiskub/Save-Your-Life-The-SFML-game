@@ -10,7 +10,7 @@ using namespace sf;
 #define normalSpawnTime 3.f
 #define flySpawnTime 25.f
 #define bossSpawnTime 15.f
-int playerScore = 1000;
+int playerScore = 0, bonusHp = 0;
 
 class GUN {
 public:
@@ -57,8 +57,8 @@ public:
     Clock clockAniEne, clockAttack;
     void setVar(Texture* texture, bool random) {
         int bonus = int(playerScore / 10);
-        if (bonus > 70)
-            bonus = 70;
+        if (bonus > 100)
+            bonus = 100;
         if (enemyType == 'n') {
             enemy.hpMax = enemy.hpNow = 80 + bonus*3;
             enemy.baseDamage = 20 + int(bonus / 2) , enemy.enemySpeed = 1.5f;
@@ -113,6 +113,19 @@ public:
     }
 }enemy;
 
+class ITEM {
+public:
+    RectangleShape shape;
+    Clock remainTime;
+    int type;
+    void setVar(Texture *text){
+        item.shape.setSize(Vector2f(80, 80));
+        item.shape.setTexture(text);
+        item.shape.setTextureRect(IntRect(type*32, 0, 32, 32));
+        item.remainTime.restart();
+    }
+}item;
+
 int main()
 {
     srand(time(NULL));
@@ -122,6 +135,7 @@ int main()
     // Var
     char playerDirect = 'r', enemyDirect = 'l', gunType = 's';
     int aniL = 0, aniR = 0, aniIdle = 0, aniFly = 0, flyTime = 0, aniBomb = 0 ,bonus = 0;
+    int reduceExpCD = 0;
     int hpNow = 200, hpMax = 200;
     float playerSpeed = 5.f, enemySpeed = 1.5f;
     bool fly = 0, land = 0, isIdle = 0;
@@ -129,7 +143,7 @@ int main()
     std::string stringUsername = "Lung Tuu", stringBombCooldown = "  ";
     std::vector<GUN> bullets;
     std::vector<ENEMY> enemies;
-    std::vector<RectangleShape> items;
+    std::vector<ITEM> items;
 
     Font FONT;
     FONT.loadFromFile("Texture/BadComic-Regular.ttf");
@@ -222,10 +236,6 @@ int main()
     hpBlack.setPosition(20, 120);
     hpBlack.setOutlineColor(Color::Black);
     hpBlack.setOutlineThickness(2);
-
-    RectangleShape dropIcon(Vector2f(80,80));
-    dropIcon.setTexture(&DROPICON);
-    dropIcon.setTextureRect(IntRect(0, 0, 32, 32));
 
     Text textUsername;
     textUsername.setFont(FONT);
@@ -482,18 +492,24 @@ int main()
                 for (int j = 0; j < enemies.size(); j++) {
                     if (!bullets[i].shape.getGlobalBounds().intersects(enemies[j].shape.getGlobalBounds()))
                         continue;
-                    enemies[j].hpNow -= (bullets[i].baseDamage + int(playerScore/100));
+                    bonus = int(playerScore / 100);
+                    if(bonus > 16 )
+                        bonus = 16;
+                    if (gunType == 's')
+                        bonus /= 2;
+                    enemies[j].hpNow -= (bullets[i].baseDamage+bonus);
                     enemies[j].hpRed.setSize(Vector2f(enemies[j].shape.getSize().x * enemies[j].hpNow / enemies[j].hpMax, enemies[j].hpBlack.getSize().y));
                     if (enemies[j].hpNow <= 0) {
-                        if (enemies[j].enemyType == 'n')
-                            playerScore += 10;
+                        if (enemies[j].enemyType == 'n') 
+                            playerScore += 10,bonusHp += 10;
                         else if (enemies[j].enemyType == 'b')
-                            playerScore += 30;
+                            playerScore += 30, bonusHp += 30;
                         else if (enemies[j].enemyType == 'f') {
-                            playerScore += 80;
-                            dropIcon.setPosition(Vector2f(enemies[j].shape.getPosition().x, 550));
-                            dropIcon.setTextureRect(IntRect(32*(rand()%3), 0, 32, 32));
-                            items.push_back(dropIcon);
+                            playerScore += 80, bonusHp += 80;
+                            item.type = rand() % 3;
+                            item.shape.setPosition(Vector2f(enemies[j].shape.getPosition().x, 550));
+                            item.setVar(&DROPICON);
+                            items.push_back(item);
                         }
                         enemies.erase(enemies.begin() + j);
                     }
@@ -505,10 +521,42 @@ int main()
             }
         }
 
+        //Update Items
+        for (int i = 0; i < items.size(); i++)
+        {
+            if (player.getGlobalBounds().intersects(items[i].shape.getGlobalBounds())) {
+                if (items[i].type == 0) {
+                    if (hpNow + 40 <= hpMax)
+                        hpNow += 40;
+                    else
+                        hpNow = hpMax;
+                }
+                else if (items[i].type == 1) {
+                    if (hpMax + 30 <= 500)
+                        hpMax += 30;
+                    else
+                        hpMax = 500;
+                    if (hpNow + 30 <= hpMax)
+                        hpNow += 30;
+                    else
+                        hpNow = hpMax;
+                }
+                else if (items[i].type == 2) {
+                    reduceExpCD = 5;
+                }
+                items.erase(items.begin() + i);
+                continue;
+            }
+            if (items[i].remainTime.getElapsedTime().asSeconds() > 4) {
+                items.erase(items.begin() + i);
+                continue;
+            }
+        }
+
         //Explosion
-        if (Keyboard::isKeyPressed(Keyboard::K) && aniBomb == 0 && clockBombCooldown.getElapsedTime().asSeconds() >= 15) {
+        if (Keyboard::isKeyPressed(Keyboard::K) && aniBomb == 0 && clockBombCooldown.getElapsedTime().asSeconds()-reduceExpCD >= 15) {
             std::cout << "Press K\n";
-            aniBomb = 1;
+            aniBomb = 1, reduceExpCD = 0;
             explosionSound.play();
             if (playerDirect == 'l') explosion.setPosition(Vector2f(playerNowX - 500, playerNowY-125));
             else explosion.setPosition(Vector2f(playerNowX + 300, playerNowY-125));
@@ -520,7 +568,7 @@ int main()
             for (int j = 0; j < enemies.size(); j++) {
                 if (!explosion.getGlobalBounds().intersects(enemies[j].shape.getGlobalBounds()))
                     continue;
-                enemies[j].hpNow -= 10;
+                enemies[j].hpNow -= 30;
                 enemies[j].hpRed.setSize(Vector2f(enemies[j].shape.getSize().x * enemies[j].hpNow / enemies[j].hpMax, enemies[j].hpBlack.getSize().y));
                 if (enemies[j].hpNow <= 0) {
                     if (enemies[j].enemyType == 'n')
@@ -532,23 +580,31 @@ int main()
             if (aniBomb == 9)
                 aniBomb = 0;
         }
-
-        int timeBombCooldown = 15 - clockBombCooldown.getElapsedTime().asSeconds();
-        if (timeBombCooldown >= 10)
-            stringBombCooldown = std::to_string(timeBombCooldown);
-        else if (timeBombCooldown > 0)
-            stringBombCooldown[0] = '0', stringBombCooldown[1] = '0' + timeBombCooldown;
-        else
-            stringBombCooldown = "  ";
+        
+        //Cooldown time Explosion
+        int timeBombCooldown = 15 - clockBombCooldown.getElapsedTime().asSeconds() - reduceExpCD;
+        if (timeBombCooldown >= 10)     stringBombCooldown = std::to_string(timeBombCooldown);
+        else if (timeBombCooldown > 0)  stringBombCooldown[0] = '0', stringBombCooldown[1] = '0' + timeBombCooldown;
+        else  stringBombCooldown = "  ";
         textExpCD.setString(stringBombCooldown);
 
         //Update Hp
-        
-        if (hpMax + playerScore / 15 < 500)
-            hpMax += playerScore / 15;
+        if (bonusHp > 100) {
+            if (hpMax < 500) {
+                if (hpMax + (bonusHp / 8) >= 500)
+                    hpMax = 500;
+                else
+                    hpMax += (bonusHp / 8);
+            }
+            if (hpNow + (bonusHp / 8) >= hpMax)
+                hpNow = hpMax;
+            else
+                hpNow += (bonusHp / 8);
+            bonusHp %= 5;
+        }
         hpRed.setSize(Vector2f(hpNow, 20));
         hpBlack.setSize(Vector2f(hpMax, 20));
-        
+
         //Draw
         window.clear();
         window.draw(Background);
@@ -556,12 +612,12 @@ int main()
         window.draw(textUsername);
         window.draw(textScore);
         window.draw(textExpCD);
+        for (int i = 0; i < items.size(); i++)
+        {
+            window.draw(items[i].shape);
+        }
         window.draw(player);
         window.draw(playerGun);
-        for (int i = 0; i < items.size(); i++) 
-        {
-            window.draw(items[i]);
-        }
         for (int i = 0; i < enemies.size(); i++)
         {
             window.draw(enemies[i].hpBlack);
