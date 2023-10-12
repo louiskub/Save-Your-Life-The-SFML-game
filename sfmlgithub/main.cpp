@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS 1
 #include <iostream>
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
@@ -264,6 +265,7 @@ int main()
     std::vector<GUN> bullets;
     std::vector<ENEMY> enemies;
     std::vector<ITEM> items;
+    std::vector<std::pair<int, std::string>> rank;
     Menu menu(window.getSize().x, window.getSize().y);
 
     Font FONT;
@@ -439,26 +441,64 @@ int main()
                     menu.MoveDown();
                 clockTyped.restart();
             }
-            if (menu.selectedItemIndex == 3 && Keyboard::isKeyPressed(Keyboard::Enter)) {
-                windowState = 0;
-                clockTyped.restart();
-                window.close();
-            }
             if (menu.selectedItemIndex == 0 && Keyboard::isKeyPressed(Keyboard::Enter)) {
                 windowState = 2;
                 clockTyped.restart();
             }
+            else if (menu.selectedItemIndex == 1 && Keyboard::isKeyPressed(Keyboard::Enter)) {
+                windowState = 3;
+                clockTyped.restart();
+            }
+            else if (menu.selectedItemIndex == 2 && Keyboard::isKeyPressed(Keyboard::Enter)) {
+                windowState = 4;
+                clockTyped.restart();
+            }
+            else if (menu.selectedItemIndex == 3 && Keyboard::isKeyPressed(Keyboard::Enter)) {
+                windowState = 0;
+                clockTyped.restart();
+                window.close();
+            }
         }
         else if (windowState == 2 && clockTyped.getElapsedTime().asSeconds() > 0.125) {
             if (Keyboard::isKeyPressed(Keyboard::Enter)) {
-                windowState = 5;
                 backgroundSound.play();
                 clockTyped.restart();
+                //clear everything
+                enemies.clear();
+                bullets.clear();
+                items.clear();
+                playerScore = 0, bonusHp = 0;
+                playerDirect = 'r', enemyDirect = 'l', gunType = 'm';
+                aniL = 0, aniR = 0, aniIdle = 0, aniFly = 0, flyTime = 0, aniBomb = 0, bonus = 0;
+                reduceExpCD = 0;
+                hpNow = 200, hpMax = 200;
+                fly = 0, land = 0, isIdle = 0;
+                clockP.restart(), clockSpawnFly.restart(), clockSpawnNormal.restart(), clockSpawnBoss.restart(), clockMusic.restart(), clockBombCooldown.restart();
+                windowState = 5;
             }
             else if (Keyboard::isKeyPressed(Keyboard::Escape)) {
                 windowState = 1;
                 clockTyped.restart();
             }
+        }
+        else if (windowState == 3) {
+            windowState = 1;
+            for (auto itr : rank) {
+                std::cout << itr.first << " " << itr.second << " " << rank.size() << "\n";
+            }
+        }
+        else if (windowState == 4) {
+            windowState = 3;
+            FILE* fp;
+            fp = fopen("scoreboard.txt", "r");
+            
+            while (!feof(fp)) {
+                char name[20];
+                int score;
+                fscanf(fp, "%s %d", &name, &score);
+                rank.push_back({ score,name });
+            }
+            fclose(fp);
         }
         else if (windowState == 5) {
             //backgroundSong
@@ -610,8 +650,14 @@ int main()
                         if (hpNow <= 0) {
                             hpNow = 0;
                             hpRed.setSize(Vector2f(hpNow, 20));
-                            enemies.clear();
-                            bullets.clear();
+                            backgroundSound.stop();
+                            windowState = 1;
+                            char arr[20];
+                            strcpy(arr, stringUsername.c_str());
+                            FILE* fp;
+                            fp = fopen("scoreboard.txt", "a");
+                            fprintf(fp, "%s %d\n", arr, playerScore);
+                            fclose(fp);                           
                             break;
                         }
                     }
