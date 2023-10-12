@@ -6,9 +6,9 @@
 #include <vector>
 using namespace sf;
 
-#define maxEnemy 10
-#define normalSpawnTime 3.f
-#define flySpawnTime 25.f
+#define maxEnemy 20
+#define normalSpawnTime 1.5f
+#define flySpawnTime 30.f
 #define bossSpawnTime 15.f
 int playerScore = 0, bonusHp = 0;
 
@@ -119,9 +119,15 @@ public:
     Clock remainTime;
     int type;
     void setVar(Texture* text) {
-        item.shape.setSize(Vector2f(80, 80));
         item.shape.setTexture(text);
-        item.shape.setTextureRect(IntRect(type * 32, 0, 32, 32));
+        if (item.type < 100) {
+            item.shape.setSize(Vector2f(70, 70));
+            item.shape.setTextureRect(IntRect(type * 32, 0, 32, 32));
+        }
+        else {
+            item.shape.setSize(Vector2f(112, 70));
+            item.shape.setTextureRect(IntRect((type - 100) * 512, 0, 512, 320));
+        }
         item.remainTime.restart();
     }
 }item;
@@ -139,7 +145,7 @@ int main()
     int hpNow = 200, hpMax = 200;
     float playerSpeed = 5.f, enemySpeed = 1.5f;
     bool fly = 0, land = 0, isIdle = 0;
-    Clock clockP, clockJ, bulletCooldown, clockSpawnNormal, clockSpawnBoss, clockMusic, clockBombCooldown, clockBombAni;
+    Clock clockP, clockJ, bulletCooldown, clockSpawnFly, clockSpawnNormal, clockSpawnBoss, clockMusic, clockBombCooldown, clockBombAni;
     std::string stringUsername = "Lung Tuu", stringBombCooldown = "  ";
     std::vector<GUN> bullets;
     std::vector<ENEMY> enemies;
@@ -292,12 +298,6 @@ int main()
             backgroundSound.play();
             clockMusic.restart();
         }
-        //Text
-        if (gunType == 's')
-            textUsername.setString("Username : " + stringUsername + "\n\n\nGuntype : Shotgun");
-        else if (gunType == 'm')
-            textUsername.setString("Username : " + stringUsername + "\n\n\nGuntype : Machine Gun");
-        textScore.setString("Score : " + std::to_string(playerScore));
 
         //PlayerMovement
         isIdle = true;
@@ -345,21 +345,6 @@ int main()
             aniL = 0, aniR = 0;
         }
 
-        if (Keyboard::isKeyPressed(Keyboard::Y)) {
-            hpNow -= 5;
-            hpRed.setSize(Vector2f(hpNow, 20));
-        }
-        if (Keyboard::isKeyPressed(Keyboard::U)) {
-            if (gunType == 's') {
-                playerGun.setTextureRect(IntRect(0, 0, 512, 320));
-                gunType = 'm';
-            }
-            else {
-                playerGun.setTextureRect(IntRect(512, 0, 512, 320));
-                gunType = 's';
-            }
-        }
-        if (Keyboard::isKeyPressed(Keyboard::I)) playerScore++;
         if (Keyboard::isKeyPressed(Keyboard::W) && !fly && !land)
             fly = 1, land = 0;
         if (fly) {
@@ -393,23 +378,24 @@ int main()
 
         // Enemy
         //SpawnEnimies
-        if (Keyboard::isKeyPressed(Keyboard::O) || (clockSpawnBoss.getElapsedTime().asSeconds() >= bossSpawnTime && enemies.size() <= maxEnemy)) {
+        if ((clockSpawnBoss.getElapsedTime().asSeconds() >= bossSpawnTime && enemies.size() <= maxEnemy)) {
             enemy.enemyType = 'b';
             enemy.setVar(&BOSSENEMY, rand() % 2);
             enemies.push_back(enemy);
             clockSpawnBoss.restart();
         }
-        if (Keyboard::isKeyPressed(Keyboard::P) || (clockSpawnNormal.getElapsedTime().asSeconds() >= normalSpawnTime && enemies.size() <= maxEnemy)) {
+        if ((clockSpawnNormal.getElapsedTime().asSeconds() >= normalSpawnTime && enemies.size() <= maxEnemy)) {
             enemy.enemyType = 'n';
             enemy.setVar(&NORMALENEMY, rand() % 2);
             enemies.push_back(enemy);
             clockSpawnNormal.restart();
         }
-        if (Keyboard::isKeyPressed(Keyboard::LBracket) || (clockSpawnNormal.getElapsedTime().asSeconds() >= flySpawnTime && enemies.size() <= maxEnemy)) {
+        if ((clockSpawnFly.getElapsedTime().asSeconds() >= flySpawnTime && enemies.size() <= maxEnemy)) {
             enemy.enemyType = 'f';
             enemy.setVar(&FLYENEMY, rand() % 2);
             enemies.push_back(enemy);
-            clockSpawnNormal.restart();
+            std::cout << clockSpawnFly.getElapsedTime().asSeconds() << std::endl;
+            clockSpawnFly.restart();
         }
 
 
@@ -504,9 +490,27 @@ int main()
                     if (enemies[j].hpNow <= 0) {
                         if (enemies[j].enemyType == 'n') {
                             playerScore += 10, bonusHp += 10;
+                            if (rand() % 20 == 0) {
+                                if (gunType == 'm') // Change to Shotgun
+                                    item.type = 101;
+                                else if (gunType == 's') // Change to Machine gun
+                                    item.type = 100;
+                                item.shape.setPosition(Vector2f(enemies[j].shape.getPosition().x, 550));
+                                item.setVar(&PLAYERGUN);
+                                items.push_back(item);
+                            }
                         }
                         else if (enemies[j].enemyType == 'b') {
                             playerScore += 30, bonusHp += 30;
+                            if (rand() % 10 == 0) {
+                                if (gunType == 'm')
+                                    item.type = 101;
+                                else if (gunType == 's')
+                                    item.type = 100;
+                                item.shape.setPosition(Vector2f(enemies[j].shape.getPosition().x, 550));
+                                item.setVar(&PLAYERGUN);
+                                items.push_back(item);
+                            }
                         }
                         else if (enemies[j].enemyType == 'f') {
                             playerScore += 80, bonusHp += 80;
@@ -525,10 +529,9 @@ int main()
             }
         }
 
-        //Update Items
-        for (int i = 0; i < items.size(); i++)
-        {
-            if (player.getGlobalBounds().intersects(items[i].shape.getGlobalBounds())) {
+        //Update && Collect Items
+        for (int i = 0; i < items.size(); i++) {
+            if (player.getGlobalBounds().intersects(items[i].shape.getGlobalBounds()) && Keyboard::isKeyPressed(Keyboard::U)) {
                 if (items[i].type == 0) {
                     if (hpNow + 40 <= hpMax)
                         hpNow += 40;
@@ -548,6 +551,12 @@ int main()
                 else if (items[i].type == 2) {
                     reduceExpCD = 5;
                 }
+                else if (items[i].type == 101) {
+                    gunType = 's';
+                }
+                else if (items[i].type == 100) {
+                    gunType = 'm';
+                }
                 items.erase(items.begin() + i);
                 continue;
             }
@@ -558,7 +567,7 @@ int main()
         }
 
         //Explosion
-        if (Keyboard::isKeyPressed(Keyboard::K) && aniBomb == 0 && clockBombCooldown.getElapsedTime().asSeconds() - reduceExpCD >= 15) {
+        if (Keyboard::isKeyPressed(Keyboard::K) && aniBomb == 0 && clockBombCooldown.getElapsedTime().asSeconds() + reduceExpCD >= 15) {
             std::cout << "Press K\n";
             aniBomb = 1, reduceExpCD = 0;
             explosionSound.play();
@@ -609,6 +618,17 @@ int main()
         hpRed.setSize(Vector2f(hpNow, 20));
         hpBlack.setSize(Vector2f(hpMax, 20));
 
+        //Text
+        if (gunType == 's') {
+            textUsername.setString("Username : " + stringUsername + "\n\n\nGuntype : Shotgun");
+            playerGun.setTextureRect(IntRect(512, 0, 512, 320));
+        }
+        else if (gunType == 'm') {
+            textUsername.setString("Username : " + stringUsername + "\n\n\nGuntype : Machine Gun");
+            playerGun.setTextureRect(IntRect(0, 0, 512, 320));
+        }
+        textScore.setString("Score : " + std::to_string(playerScore));
+
         //Draw
         window.clear();
         window.draw(Background);
@@ -640,5 +660,3 @@ int main()
     }
 
     return 0;
-}
-
