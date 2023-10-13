@@ -9,3 +9,5 @@ kpppp 360
 kpppp 500
 kpppp 600
 Terk 1010
+ppppppppppppppp 80
+ 910

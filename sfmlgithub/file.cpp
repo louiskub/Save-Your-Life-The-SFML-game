@@ -1,24 +1,50 @@
-#define _CRT_SECURE_NO_WARNINGS 1
-#include<stdio.h>
+#include <SFML/Graphics.hpp>
 #include <iostream>
-int main()
-{
-	char arr[10];
-	int playerScore;
-	FILE* fp;
-	fp = fopen("scoreboard.txt", "a");
-	std::cin >> arr >> playerScore;
-	fprintf(fp, "%s %d\n", arr, playerScore);
-	fclose(fp);
 
-	fp = fopen("scoreboard.txt", "r");
-	while (!feof(fp)) {
-		char name[20];
-		int score;
-		fscanf(fp, "%s %d", &name, &score);
-		std::cout << name << " " << score << "\n";
-	}
-	fclose(fp);
+int main() {
+    sf::RenderWindow window(sf::VideoMode(800, 600), "SFML Clock Pause");
 
-	return 0;
+    sf::Clock clock;
+    bool isPaused = false;
+    sf::Time elapsedTime;
+
+    while (window.isOpen()) {
+        sf::Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed)
+                window.close();
+
+            if (event.type == sf::Event::KeyPressed) {
+                if (event.key.code == sf::Keyboard::P) {
+                    if (isPaused) {
+                        // Resume the clock
+                        elapsedTime = clock.getElapsedTime();
+                        isPaused = false;
+                    }
+                    else {
+                        // Pause the clock
+                        std::cout << "Pause";
+                        clock.restart();
+                        isPaused = true;
+                    }
+                }
+            }
+        }
+
+        if (!isPaused) {
+            
+            // Update your game logic using the elapsed time
+            sf::Time deltaTime = clock.restart();
+            std::cout << elapsedTime.asSeconds() << "\n";
+        }
+        else {
+            // You can keep track of the paused time if needed
+        }
+        window.clear();
+        // Render your game objects
+        // ...
+        window.display();
+    }
+
+    return 0;
 }
