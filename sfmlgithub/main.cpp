@@ -4,14 +4,17 @@
 #include <SFML/Window.hpp>
 #include <SFML/System.hpp>
 #include <SFML/Audio.hpp>
+#include <algorithm>
+#include <utility> 
 #include <vector>
+#include <set>
 using namespace sf;
 
 #define maxEnemy 20
 #define normalSpawnTime 1.5f
 #define flySpawnTime 30.f
 #define bossSpawnTime 15.f
-#define MAX_STATE 5
+#define MAX_STATE 6
 #define DELETE_KEY 8
 #define ENTER_KEY 13
 #define ESCAPE_KEY 27
@@ -142,19 +145,35 @@ private:
     Font font1;
     Font font2;
     Texture TEXTBOX;
+    Text txt;
     RectangleShape textbox, inputbox;
+    SoundBuffer SOUNDBUFFER[6];
     std::vector<RectangleShape> textboxs;
+    std::vector<std::pair<Text, Text>> scoreUser;
 public:
     Menu(float width, float height);
     void draw(RenderWindow& window, int windowState);
     void MoveUp();
     void MoveDown();
-    Text txt;
+    void CreateScoreboard();
     std::vector<Text> text[MAX_STATE];
+    std::set<std::pair<int, std::string>, std::greater<std::pair<int, std::string>>> rank;
+    Sound sound[6];
     int selectedItemIndex = 0;
 };
 Menu::Menu(float width, float height) {
     TEXTBOX.loadFromFile("Texture/Textbox3.png");
+
+    SOUNDBUFFER[0].loadFromFile("audio/mainmenu/pointer.mp3");
+    SOUNDBUFFER[1].loadFromFile("audio/mainmenu/confirm.mp3");
+    SOUNDBUFFER[2].loadFromFile("audio/mainmenu/cancle.mp3");
+    SOUNDBUFFER[3].loadFromFile("audio/mainmenu/popup.mp3");
+    SOUNDBUFFER[4].loadFromFile("audio/mainmenu/popdown.mp3");
+    SOUNDBUFFER[5].loadFromFile("audio/mainmenu/type.mp3");
+    for (int i = 0; i < 6; i++) {
+        sound[i].setBuffer(SOUNDBUFFER[i]);
+        sound[i].setVolume(40);
+    }
 
     font1.loadFromFile("Texture/Kaph-Regular.ttf");
     font2.loadFromFile("Texture/MachineGunk.ttf");
@@ -206,6 +225,12 @@ Menu::Menu(float width, float height) {
     txt.setOrigin(Vector2f(txt.getGlobalBounds().width / 2, txt.getGlobalBounds().height / 2));
     text[1].push_back(txt);
 
+    txt.setCharacterSize(70);
+    txt.setString("Scoreboard");
+    txt.setOrigin(Vector2f(txt.getGlobalBounds().width / 2, txt.getGlobalBounds().height / 2));
+    txt.setPosition(Vector2f(width / 2, 100));
+    text[5].push_back(txt);
+
     txt.setFont(font2);
     txt.setCharacterSize(60);
     txt.setString("Enter Your Name");
@@ -213,17 +238,19 @@ Menu::Menu(float width, float height) {
     txt.setPosition(Vector2f(width / 2, 120));
     text[2].push_back(txt);
 
-    txt.setString("Press Enter To Start Game");
     txt.setCharacterSize(50);
+    txt.setString("Press Enter To Start Game");
     txt.setOrigin(Vector2f(txt.getGlobalBounds().width / 2, txt.getGlobalBounds().height / 2));
     txt.setPosition(Vector2f(width / 2, 350));
     text[2].push_back(txt);
+
+    
 }
 void Menu::draw(RenderWindow& window, int windowState) {
     if (windowState == 2) {
         window.draw(inputbox);
-    }
-    else if (windowState == 1) {
+        
+    }else if (windowState == 1) {
         for (int i = 0; i < textboxs.size(); i++)
             window.draw(textboxs[i]);
     }
@@ -231,9 +258,24 @@ void Menu::draw(RenderWindow& window, int windowState) {
         window.draw(text[windowState][i]);
     }
 }
+void Menu::CreateScoreboard() {
+    int i = 0;
+    txt.setOrigin(0, 0);
+    for (auto itr : rank) {
+        if (i > 4) break;
+        txt.setString(itr.second);
+        txt.setPosition(Vector2f(250, 180 + 80 * i));
+        text[5].push_back(txt);
+        txt.setString(std::to_string(itr.first));
+        txt.setPosition(Vector2f(640, 180 + 80 * i));
+        text[5].push_back(txt);
+        i++;
+    }
+}
 void Menu::MoveUp() {
     if (selectedItemIndex == 0)
         return;
+    sound[0].play();
     text[1][selectedItemIndex].setFillColor(Color::Black);
     selectedItemIndex--;
     text[1][selectedItemIndex].setFillColor(Color::Red);
@@ -241,6 +283,7 @@ void Menu::MoveUp() {
 void Menu::MoveDown() {
     if (selectedItemIndex == text[1].size() - 1)
         return;
+    sound[0].play();
     text[1][selectedItemIndex].setFillColor(Color::Black);
     selectedItemIndex++;
     text[1][selectedItemIndex].setFillColor(Color::Red);
@@ -253,7 +296,8 @@ int main()
     window.setFramerateLimit(60);
 
     // Var
-    int windowState = 1; // 0 = close game   --- 1 = Mainmenu ---- 2 = Ready to Play game ---- 3 = How To Play ---- 4 = ScoreBoard ---- 5 = Gameplay
+    int windowState = 1; // 0 = close game ----- 1 = Mainmenu ---- 2 = Ready to Play game ---- 3 = How To Play
+    //  4 = ScoreBoard ---- 5 = Show Score ---- 10 = Gameplay --- 11 = Pause Game
     char playerDirect = 'r', enemyDirect = 'l', gunType = 'm';
     int aniL = 0, aniR = 0, aniIdle = 0, aniFly = 0, flyTime = 0, aniBomb = 0, bonus = 0;
     int reduceExpCD = 0;
@@ -265,7 +309,6 @@ int main()
     std::vector<GUN> bullets;
     std::vector<ENEMY> enemies;
     std::vector<ITEM> items;
-    std::vector<std::pair<int, std::string>> rank;
     Menu menu(window.getSize().x, window.getSize().y);
 
     Font FONT;
@@ -273,7 +316,6 @@ int main()
 
     Texture MAP;
     MAP.loadFromFile("background/gameplay.png");
-
     Texture MAINMENU;
     MAINMENU.loadFromFile("background/Mainmenu.jpg");
 
@@ -422,11 +464,12 @@ int main()
                     }
                     else if (event.text.unicode != ENTER_KEY && event.text.unicode != ESCAPE_KEY && stringUsername.size() < 15) {
                         stringUsername += event.text.unicode;
+                        menu.sound[5].play();
                     }
                 }
             }
         }
-        
+
         if (windowState == 1 && clockTyped.getElapsedTime().asSeconds() > 0.125) {
             if (Keyboard::isKeyPressed(Keyboard::W)) {
                 menu.MoveUp();
@@ -437,23 +480,27 @@ int main()
                 clockTyped.restart();
             }
             else if (Keyboard::isKeyPressed(Keyboard::Escape)) {
-                while (menu.selectedItemIndex != 3) 
+                while (menu.selectedItemIndex != 3)
                     menu.MoveDown();
                 clockTyped.restart();
             }
             if (menu.selectedItemIndex == 0 && Keyboard::isKeyPressed(Keyboard::Enter)) {
+                menu.sound[1].play();
                 windowState = 2;
                 clockTyped.restart();
             }
             else if (menu.selectedItemIndex == 1 && Keyboard::isKeyPressed(Keyboard::Enter)) {
+                menu.sound[1].play();
                 windowState = 3;
                 clockTyped.restart();
             }
             else if (menu.selectedItemIndex == 2 && Keyboard::isKeyPressed(Keyboard::Enter)) {
+                menu.sound[1].play();
                 windowState = 4;
                 clockTyped.restart();
             }
             else if (menu.selectedItemIndex == 3 && Keyboard::isKeyPressed(Keyboard::Enter)) {
+                menu.sound[1].play();
                 windowState = 0;
                 clockTyped.restart();
                 window.close();
@@ -461,6 +508,7 @@ int main()
         }
         else if (windowState == 2 && clockTyped.getElapsedTime().asSeconds() > 0.125) {
             if (Keyboard::isKeyPressed(Keyboard::Enter)) {
+                menu.sound[1].play();
                 backgroundSound.play();
                 clockTyped.restart();
                 //clear everything
@@ -474,33 +522,50 @@ int main()
                 hpNow = 200, hpMax = 200;
                 fly = 0, land = 0, isIdle = 0;
                 clockP.restart(), clockSpawnFly.restart(), clockSpawnNormal.restart(), clockSpawnBoss.restart(), clockMusic.restart(), clockBombCooldown.restart();
-                windowState = 5;
+                windowState = 10;
             }
             else if (Keyboard::isKeyPressed(Keyboard::Escape)) {
+                menu.sound[2].play();
                 windowState = 1;
                 clockTyped.restart();
             }
         }
         else if (windowState == 3) {
-            windowState = 1;
-            for (auto itr : rank) {
-                std::cout << itr.first << " " << itr.second << " " << rank.size() << "\n";
+            if (Keyboard::isKeyPressed(Keyboard::Escape)) {
+                menu.sound[2].play();
+                windowState = 1;
+                clockTyped.restart();
             }
         }
         else if (windowState == 4) {
-            windowState = 3;
+            windowState = 5;
             FILE* fp;
             fp = fopen("scoreboard.txt", "r");
-            
+
             while (!feof(fp)) {
                 char name[20];
                 int score;
                 fscanf(fp, "%s %d", &name, &score);
-                rank.push_back({ score,name });
+                menu.rank.insert({ score,name });
             }
             fclose(fp);
+            menu.CreateScoreboard();
         }
-        else if (windowState == 5) {
+        if (windowState == 5 && clockTyped.getElapsedTime().asSeconds() > 0.125) {
+            if (Keyboard::isKeyPressed(Keyboard::Escape)) {
+                menu.sound[2].play();
+                windowState = 1;
+                menu.text[5].clear();
+                clockTyped.restart();
+            }
+        }
+        else if (windowState == 10) {
+            if (Keyboard::isKeyPressed(Keyboard::Escape) && clockTyped.getElapsedTime().asSeconds() > 0.125) {
+                menu.sound[3].play();
+                windowState = 11;
+                clockTyped.restart();
+            }
+
             //backgroundSong
             if (clockMusic.getElapsedTime().asSeconds() >= 250) {
                 backgroundSound.play();
@@ -657,7 +722,7 @@ int main()
                             FILE* fp;
                             fp = fopen("scoreboard.txt", "a");
                             fprintf(fp, "%s %d\n", arr, playerScore);
-                            fclose(fp);                           
+                            fclose(fp);
                             break;
                         }
                     }
@@ -844,17 +909,26 @@ int main()
                 playerGun.setTextureRect(IntRect(0, 0, 512, 320));
             }
             textScore.setString("Score : " + std::to_string(playerScore));
-        }       
-
+        }
+        else if (windowState == 11 && clockTyped.getElapsedTime().asSeconds() > 0.125) {
+            if (Keyboard::isKeyPressed(Keyboard::Escape)) {
+                menu.sound[4].play();
+                windowState = 10;
+                clockTyped.restart();
+            }else if (Keyboard::isKeyPressed(Keyboard::Enter)) {
+                menu.sound[1].play();
+                windowState = 1;
+                clockTyped.restart();
+            }
+        }
         //Draw
         window.clear();
-        if (windowState != 5) {
-            text.setString(stringUsername);
-            text.setOrigin(Vector2f(text.getGlobalBounds().width / 2, 0));
-            window.clear();
+        if (windowState < 10) {
             window.draw(mainmenu);
             menu.draw(window, windowState);
             if (windowState == 2) {
+                text.setString(stringUsername);
+                text.setOrigin(Vector2f(text.getGlobalBounds().width / 2, 0));
                 window.draw(text);
             }
         }
@@ -885,7 +959,7 @@ int main()
             if (aniBomb > 0)
                 window.draw(explosion);
         }
-        
+
         window.display();
     }
 
