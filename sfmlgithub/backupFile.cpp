@@ -51,7 +51,6 @@ public:
         }
     }
 }gun;
-
 class ENEMY {
 public:
     RectangleShape shape;
@@ -120,7 +119,6 @@ public:
         enemy.hpBlack.setOutlineThickness(2);
     }
 }enemy;
-
 class ITEM {
 public:
     RectangleShape shape;
@@ -139,7 +137,6 @@ public:
         item.remainTime.restart();
     }
 }item;
-
 class Menu {
 private:
     Font font1;
@@ -166,7 +163,6 @@ public:
 };
 Menu::Menu(float width, float height) {
     TEXTBOX.loadFromFile("Texture/Textbox3.png");
-
     SOUNDBUFFER[0].loadFromFile("audio/mainmenu/pointer.mp3");
     SOUNDBUFFER[1].loadFromFile("audio/mainmenu/confirm.mp3");
     SOUNDBUFFER[2].loadFromFile("audio/mainmenu/cancle.mp3");
@@ -177,7 +173,6 @@ Menu::Menu(float width, float height) {
         sound[i].setBuffer(SOUNDBUFFER[i]);
         sound[i].setVolume(25);
     }
-
     font1.loadFromFile("Texture/Kaph-Regular.ttf");
     font2.loadFromFile("Texture/MachineGunk.ttf");
 
@@ -207,7 +202,6 @@ Menu::Menu(float width, float height) {
     textbox.setPosition(Vector2f(width / 2, 410));
     resumebox.push_back(textbox);
 
-
     textbox.setSize(Vector2f(450, 110));
     textbox.setOutlineThickness(0);
     textbox.setOrigin(Vector2f(textbox.getGlobalBounds().width / 2, 0));
@@ -223,7 +217,7 @@ Menu::Menu(float width, float height) {
 
     txt.setFont(font1);
     txt.setOutlineThickness(5);
-    txt.setOutlineColor(Color::White);
+    txt.setOutlineColor(Color::Black);
     txt.setCharacterSize(40);
 
     txt.setFillColor(Color::Red);
@@ -232,13 +226,13 @@ Menu::Menu(float width, float height) {
     txt.setOrigin(Vector2f(txt.getGlobalBounds().width / 2, txt.getGlobalBounds().height / 2));
     text[1].push_back(txt);
 
-    txt.setFillColor(Color::Black);
+    txt.setFillColor(Color::White);
     txt.setString("How To Play");
     txt.setPosition(Vector2f(width / 2, 260));
     txt.setOrigin(Vector2f(txt.getGlobalBounds().width / 2, txt.getGlobalBounds().height / 2));
     text[1].push_back(txt);
 
-    txt.setFillColor(Color::Black);
+    txt.setFillColor(Color::White);
     txt.setString("Scoreboard");
     txt.setPosition(Vector2f(width / 2, 400));
     txt.setOrigin(Vector2f(txt.getGlobalBounds().width / 2, txt.getGlobalBounds().height / 2));
@@ -250,20 +244,22 @@ Menu::Menu(float width, float height) {
     text[1].push_back(txt);
 
     txt.setCharacterSize(70);
-    txt.setString("Scoreboard");
+    txt.setString("How to play");
+    txt.setFillColor(Color::Yellow);
     txt.setOrigin(Vector2f(txt.getGlobalBounds().width / 2, txt.getGlobalBounds().height / 2));
     txt.setPosition(Vector2f(width / 2, 100));
-    text[5].push_back(txt);
+    text[3].push_back(txt);
 
-    txt.setFont(font2);
-    txt.setCharacterSize(60);
+
+    txt.setCharacterSize(50);
     txt.setString("Enter Your Name");
     txt.setOrigin(Vector2f(txt.getGlobalBounds().width / 2, txt.getGlobalBounds().height / 2));
     txt.setPosition(Vector2f(width / 2, 120));
     text[2].push_back(txt);
 
-    txt.setCharacterSize(50);
-    txt.setString("Enter To Start Game");
+    txt.setFont(font2);
+    txt.setFillColor(Color::White);
+    txt.setString("Press Enter To Start Game");
     txt.setOrigin(Vector2f(txt.getGlobalBounds().width / 2, txt.getGlobalBounds().height / 2));
     txt.setPosition(Vector2f(width / 2, 350));
     text[2].push_back(txt);
@@ -294,19 +290,30 @@ Menu::Menu(float width, float height) {
 void Menu::draw(RenderWindow& window, int windowState) {
     if (windowState == 2) {
         window.draw(inputbox);
-
     }
     else if (windowState == 1) {
         for (int i = 0; i < textboxs.size(); i++)
             window.draw(textboxs[i]);
     }
+
     for (int i = 0; i < text[windowState].size(); i++) {
         window.draw(text[windowState][i]);
     }
 }
 void Menu::CreateScoreboard() {
+    txt.setFont(font1);
+    txt.setCharacterSize(70);
+    txt.setFillColor(Color::Yellow);
+    txt.setString("Scoreboard");
+    txt.setOrigin(Vector2f(txt.getGlobalBounds().width / 2, txt.getGlobalBounds().height / 2));
+    txt.setPosition(Vector2f(500, 100));
+    text[5].push_back(txt);
+
     int i = 0;
     txt.setOrigin(0, 0);
+    txt.setFillColor(Color::White);
+    txt.setFont(font2);
+    txt.setCharacterSize(50);
     for (auto itr : rank) {
         if (i > 4) break;
         txt.setString(itr.second);
@@ -330,7 +337,7 @@ void Menu::MoveUp(int windowState) {
     if (selectedItemIndex == 0)
         return;
     sound[0].play();
-    text[windowState][selectedItemIndex].setFillColor(Color::Black);
+    text[windowState][selectedItemIndex].setFillColor(Color::White);
     selectedItemIndex--;
     text[windowState][selectedItemIndex].setFillColor(Color::Red);
 }
@@ -338,7 +345,7 @@ void Menu::MoveDown(int windowState) {
     if (selectedItemIndex == text[1].size() - 1)
         return;
     sound[0].play();
-    text[windowState][selectedItemIndex].setFillColor(Color::Black);
+    text[windowState][selectedItemIndex].setFillColor(Color::White);
     selectedItemIndex++;
     text[windowState][selectedItemIndex].setFillColor(Color::Red);
 }
@@ -358,7 +365,7 @@ int main()
     int hpNow = 200, hpMax = 200;
     float playerSpeed = 5.f, enemySpeed = 1.5f;
     bool fly = 0, land = 0, isIdle = 0;
-    Clock clockTyped, clockP, clockJ, bulletCooldown, clockMusic, clockSpawnFly, clockSpawnNormal, clockSpawnBoss, clockBombCooldown, clockBombAni;
+    Clock clockTyped, clockP, clockJ, bulletCooldown, clockSpawnFly, clockSpawnNormal, clockSpawnBoss, clockBombCooldown, clockBombAni;
     std::string stringUsername, stringBombCooldown = "  ";
     std::vector<GUN> bullets;
     std::vector<ENEMY> enemies;
@@ -372,6 +379,8 @@ int main()
     MAP.loadFromFile("background/gameplay.png");
     Texture MAINMENU;
     MAINMENU.loadFromFile("background/Mainmenu.jpg");
+    Texture HOWTOPLAY;
+    HOWTOPLAY.loadFromFile("background/Howtoplay.png");
 
     Texture PLAYER;
     PLAYER.loadFromFile("sprite/Run.png");
@@ -399,6 +408,9 @@ int main()
 
     SoundBuffer BACKGROUNDSOUND;
     BACKGROUNDSOUND.loadFromFile("audio/startmenu.mp3");
+    SoundBuffer THEMESOUND;
+    THEMESOUND.loadFromFile("audio/mainmenu/themesong.mp3");
+
     SoundBuffer SHOTGUNSOUND;
     SHOTGUNSOUND.loadFromFile("audio/shotgun.mp3");
     SoundBuffer MACHINEGUNSOUND;
@@ -416,6 +428,14 @@ int main()
     RectangleShape Background(Vector2f(1000.f, 600.f));
     Background.setPosition(Vector2f(0.f, 50.f));
     Background.setTexture(&MAP);
+
+    RectangleShape howtoplayBack(Vector2f(720.f, 450.f));
+    howtoplayBack.setOrigin(Vector2f(howtoplayBack.getGlobalBounds().width / 2, howtoplayBack.getGlobalBounds().height / 2));
+    howtoplayBack.setPosition(Vector2f(500.f, 400.f));
+    howtoplayBack.setTexture(&HOWTOPLAY);
+    howtoplayBack.setTextureRect(IntRect(0, 84, 1000, 532));
+    howtoplayBack.setOutlineColor(Color::Black);
+    howtoplayBack.setOutlineThickness(5);
 
     RectangleShape player(Vector2f(200, 200));
     player.setTexture(&PLAYER);
@@ -492,6 +512,12 @@ int main()
     Sound backgroundSound;
     backgroundSound.setBuffer(BACKGROUNDSOUND);
     backgroundSound.setVolume(40);
+    backgroundSound.setLoop(true);
+
+    Sound themeSound(THEMESOUND);
+    themeSound.setVolume(100);
+    themeSound.setLoop(true);
+    themeSound.play();
 
     Sound shotgunSound;
     shotgunSound.setBuffer(SHOTGUNSOUND);
@@ -565,6 +591,7 @@ int main()
         else if (windowState == 2 && clockTyped.getElapsedTime().asSeconds() > 0.125) {
             if (Keyboard::isKeyPressed(Keyboard::Enter)) {
                 menu.sound[1].play();
+                themeSound.stop();
                 backgroundSound.play();
                 clockTyped.restart();
                 //clear everything
@@ -577,7 +604,7 @@ int main()
                 reduceExpCD = 0;
                 hpNow = 200, hpMax = 200;
                 fly = 0, land = 0, isIdle = 0;
-                clockP.restart(), clockSpawnFly.restart(), clockSpawnNormal.restart(), clockSpawnBoss.restart(), clockMusic.restart(), clockBombCooldown.restart();
+                clockP.restart(), clockSpawnFly.restart(), clockSpawnNormal.restart(), clockSpawnBoss.restart(), clockBombCooldown.restart();
                 windowState = 6;
             }
             else if (Keyboard::isKeyPressed(Keyboard::Escape)) {
@@ -609,7 +636,7 @@ int main()
             fclose(fp);
             menu.CreateScoreboard();
         }
-        // Exit
+        // Show Scoreboard
         if (windowState == 5 && clockTyped.getElapsedTime().asSeconds() > 0.125) {
             if (Keyboard::isKeyPressed(Keyboard::Escape)) {
                 menu.sound[2].play();
@@ -624,13 +651,8 @@ int main()
                 menu.sound[3].play();
                 windowState = 7;
                 menu.selectedItemIndex = 1;
+                backgroundSound.pause();
                 clockTyped.restart();
-            }
-
-            //backgroundSong
-            if (clockMusic.getElapsedTime().asSeconds() >= 250) {
-                backgroundSound.play();
-                clockMusic.restart();
             }
 
             //PlayerMovement
@@ -728,7 +750,6 @@ int main()
                 enemy.enemyType = 'f';
                 enemy.setVar(&FLYENEMY, rand() % 2);
                 enemies.push_back(enemy);
-                std::cout << clockSpawnFly.getElapsedTime().asSeconds() << std::endl;
                 clockSpawnFly.restart();
             }
 
@@ -765,18 +786,17 @@ int main()
                     int sizeY = enemies[i].sizeY;
                     enemies[i].shape.setTextureRect(IntRect(sizeX * enemies[i].aniEnemy, 0, sizeX, sizeY));
                     if (enemies[i].shape.getGlobalBounds().intersects(player.getGlobalBounds()) &&
-                        enemies[i].aniEnemy >= 17 && enemies[i].aniEnemy <= 20 &&
+                        enemies[i].aniEnemy >= 17 && enemies[i].aniEnemy <= 18 &&
                         enemies[i].clockAttack.getElapsedTime().asSeconds() >= 2)
                     {
                         enemies[i].clockAttack.restart();
                         hpNow = hpNow - enemies[i].baseDamage;
                         dinoBiteSound.play();
-                        std::cout << hpNow << "\n";
                         // Death
                         if (hpNow <= 0) {
                             hpNow = 0;
                             hpRed.setSize(Vector2f(hpNow, 20));
-                            backgroundSound.stop();
+                            backgroundSound.stop(), themeSound.play();
                             windowState = 1;
                             char arr[20];
                             strcpy(arr, stringUsername.c_str());
@@ -876,6 +896,7 @@ int main()
                 if (player.getGlobalBounds().intersects(items[i].shape.getGlobalBounds()) && Keyboard::isKeyPressed(Keyboard::U)) {
                     if (items[i].type == 0) {
                         if (hpNow + 40 <= hpMax)
+
                             hpNow += 40;
                         else
                             hpNow = hpMax;
@@ -910,7 +931,6 @@ int main()
 
             //Explosion
             if (Keyboard::isKeyPressed(Keyboard::K) && aniBomb == 0 && clockBombCooldown.getElapsedTime().asSeconds() + reduceExpCD >= 15) {
-                std::cout << "Press K\n";
                 aniBomb = 1, reduceExpCD = 0;
                 explosionSound.play();
                 if (playerDirect == 'l') explosion.setPosition(Vector2f(playerNowX - 500, playerNowY - 125));
@@ -990,6 +1010,7 @@ int main()
             if (Keyboard::isKeyPressed(Keyboard::Escape) || (Keyboard::isKeyPressed(Keyboard::Enter) && menu.selectedItemIndex == 1)) {
                 menu.selectedItemIndex = 1;
                 menu.sound[4].play();
+                backgroundSound.play();
                 windowState = 6;
                 clockTyped.restart();
             }
@@ -1016,6 +1037,9 @@ int main()
                 text.setString(stringUsername);
                 text.setOrigin(Vector2f(text.getGlobalBounds().width / 2, 0));
                 window.draw(text);
+            }
+            else if (windowState == 3) {
+                window.draw(howtoplayBack);
             }
         }
         // Gameplay Case
