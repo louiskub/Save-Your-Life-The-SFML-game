@@ -451,6 +451,8 @@ int main()
     DINOBITE.loadFromFile("audio/dinoBite.mp3");
     SoundBuffer EXPLOSIONSOUND;
     EXPLOSIONSOUND.loadFromFile("audio/explosionSound.mp3");
+    SoundBuffer ITEMDROPPPING;
+    ITEMDROPPPING.loadFromFile("audio/dropeffect.mp3");
 
     // Define Object
 
@@ -567,7 +569,8 @@ int main()
     Sound explosionSound;
     explosionSound.setBuffer(EXPLOSIONSOUND);
     explosionSound.setVolume(60);
-
+    Sound itemDropping(ITEMDROPPPING);
+    itemDropping.setVolume(60);
     while (window.isOpen())
     {
         Event event;
@@ -894,6 +897,7 @@ int main()
                             if (enemies[j].enemyType == 'n') {
                                 playerScore += 10, bonusHp += 10;
                                 if (rand() % 20 == 0) {
+                                    itemDropping.play();
                                     if (gunType == 'm') // Change to Shotgun
                                         item.type = 101;
                                     else if (gunType == 's') // Change to Machine gun
@@ -906,6 +910,7 @@ int main()
                             else if (enemies[j].enemyType == 'b') {
                                 playerScore += 30, bonusHp += 30;
                                 if (rand() % 10 == 0) {
+                                    itemDropping.play();
                                     if (gunType == 'm')
                                         item.type = 101;
                                     else if (gunType == 's')
@@ -916,6 +921,7 @@ int main()
                                 }
                             }
                             else if (enemies[j].enemyType == 'f') {
+                                itemDropping.play();
                                 playerScore += 80, bonusHp += 80;
                                 item.type = rand() % 3;
                                 item.shape.setPosition(Vector2f(enemies[j].shape.getPosition().x, 550));
