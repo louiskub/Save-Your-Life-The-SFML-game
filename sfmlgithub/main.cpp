@@ -1,4 +1,4 @@
-#define _CRT_SECURE_NO_WARNINGS 1
+﻿#define _CRT_SECURE_NO_WARNINGS 1
 #include <iostream>
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
@@ -12,7 +12,7 @@ using namespace sf;
 
 #define maxEnemy 20
 #define normalSpawnTime 1.5f
-#define flySpawnTime 30.f
+#define flySpawnTime 10.f
 #define bossSpawnTime 15.f
 #define MAX_STATE 8
 #define DELETE_KEY 8
@@ -155,6 +155,7 @@ private:
     SoundBuffer SOUNDBUFFER[6];
     std::vector<std::pair<Text, Text>> scoreUser;
     std::vector<RectangleShape> textboxs;
+    Texture EXIT;
 public:
     Menu(float width, float height);
     void draw(RenderWindow& window, int windowState);
@@ -170,6 +171,7 @@ public:
 };
 Menu::Menu(float width, float height) {
     TEXTBOX.loadFromFile("Texture/Textbox3.png");
+    EXIT.loadFromFile("background/pause.jpg");
     SOUNDBUFFER[0].loadFromFile("audio/mainmenu/pointer.mp3");
     SOUNDBUFFER[1].loadFromFile("audio/mainmenu/confirm.mp3");
     SOUNDBUFFER[2].loadFromFile("audio/mainmenu/cancle.mp3");
@@ -193,7 +195,8 @@ Menu::Menu(float width, float height) {
     exitbox.setSize(Vector2f(480, 300));
     exitbox.setOrigin(Vector2f(exitbox.getGlobalBounds().width / 2, 0));
     exitbox.setPosition(Vector2f(500, 200));
-    exitbox.setFillColor(Color::Green);
+    exitbox.setFillColor(Color(255,255,255,200));
+    exitbox.setTexture(&EXIT);
     exitbox.setOutlineColor(Color::Black);
     exitbox.setOutlineThickness(4);
 
@@ -310,7 +313,7 @@ Menu::Menu(float width, float height) {
     txt.setCharacterSize(40);
     txt.setString("Press Esc To Back To Mainmenu");
     txt.setOrigin(Vector2f(txt.getGlobalBounds().width / 2, txt.getGlobalBounds().height / 2));
-    txt.setPosition(Vector2f(500, 625));
+    txt.setPosition(Vector2f(500, 600));
     text[0].push_back(txt);
     text[2].push_back(txt);
     text[3].push_back(txt);
@@ -354,7 +357,7 @@ void Menu::CreateScoreboard() {
     txt.setCharacterSize(40);
     txt.setString("Press Esc To Back To Mainmenu");
     txt.setOrigin(Vector2f(txt.getGlobalBounds().width / 2, txt.getGlobalBounds().height / 2));
-    txt.setPosition(Vector2f(500, 625));
+    txt.setPosition(Vector2f(500, 600));
     text[5].push_back(txt);
 }
 void Menu::ExitBox(RenderWindow& window) {
@@ -406,6 +409,8 @@ int main()
 
     Font FONT;
     FONT.loadFromFile("Texture/BadComic-Regular.ttf");
+    Font FONTNAME;
+    FONTNAME.loadFromFile("Texture/JacobThin.ttf");
 
     Texture MAP;
     MAP.loadFromFile("background/gameplay.png");
@@ -547,6 +552,15 @@ int main()
     text.setOutlineColor(Color::Black);
     text.setPosition(Vector2f(1000 / 2, 230));
 
+    Text creator;
+    creator.setFont(FONTNAME);
+    creator.setString("Manatsavin Kunnantajiam 66010660  KMITL");
+    creator.setCharacterSize(35);
+    creator.setFillColor(Color::White);
+    creator.setOutlineThickness(4);
+    creator.setOutlineColor(Color::Black);
+    creator.setPosition(Vector2f(355, 650));
+
     Sound backgroundSound;
     backgroundSound.setBuffer(BACKGROUNDSOUND);
     backgroundSound.setVolume(40);
@@ -644,7 +658,7 @@ int main()
                 bullets.clear();
                 items.clear();
                 playerScore = 0, bonusHp = 0;
-                playerDirect = 'r', enemyDirect = 'l', gunType = 's';
+                playerDirect = 'r', enemyDirect = 'l', gunType = 'm';
                 aniL = 0, aniR = 0, aniIdle = 0, aniFly = 0, flyTime = 0, aniBomb = 0, bonus = 0;
                 reduceExpCD = 0;
                 hpNow = 200, hpMax = 200;
@@ -1138,7 +1152,7 @@ int main()
                 menu.ExitBox(window);
             }
         }
-
+        window.draw(creator);
         window.display();
     }
 
